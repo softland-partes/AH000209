@@ -7,7 +7,7 @@ Const TristateUseDefault = -2, TristateTrue = -1, TristateFalse = 0
 Const ObjectType = 5                    'Constante que indica el tipo de objeto. Este vale 5 para los reportes
 '************ Datos empresa **********
 Const cNombre_Empresa = "MPE"
-const sPath = "G:\adjuntosnp\" '<-----------Archivo adjunto externo'
+
 '************ para usar usuario encriptado **********
 Dim sUser, sPassWord, sServer, sDriver, dElementHtml
 Dim sDatabase 'Siempre asignar el nombre de la empresa antes de cualquier otra cosa
@@ -103,7 +103,7 @@ Function EjecutoEnvioMail(CodigoDeTransaccion, EsMulti, EsMain)
 
     arrArchivos = Array()
     contador = 0
-	  contador2 = 0
+	 contador2 = 0
     Do While Not rd.EOF
         If EsMulti = "S" Then
             sCodemp = rd("CODEMP").value
@@ -142,17 +142,10 @@ Function EjecutoEnvioMail(CodigoDeTransaccion, EsMulti, EsMain)
         iCount = TieneAnexo(sCodemp, sModfor, sCodfor, lNrofor)
 
         GeneroPDF sPdfPath, sNrocta, sCodemp, sModfor, sCodfor, lNrofor, sEsMain, EsMulti, sCodCom
-        if (instr(sCodCom,"FCA")<>0 or instr(sCodCom,"FCP")<>0 or instr(sCodCom,"FCU")<>0 or instr(sCodCom,"FCX")>0) and iCount>0 then
-        	GeneroPDFCV sPdfPath, sNrocta, sCodemp, sModfor, sCodfor, lNrofor, sEsMain, EsMulti,sCodCom
-        End if
+        if (instr(sCodCom,"FCA")<>0 or instr(sCodCom,"FCP")<>0 or instr(sCodCom,"FCU")<>0 or instr(sCodCom,"FCX")>0)and iCount>0 then
+        	 GeneroPDFCV sPdfPath, sNrocta, sCodemp, sModfor, sCodfor, lNrofor, sEsMain, EsMulti,sCodCom
+        	End if
         GeneroPDFVT sPdfPath, sNrocta, sCodemp, sModfor, sCodfor, lNrofor, sEsMain, EsMulti
-
-        sRuta = rd("RUTA").value
-        if sRuta <> "NULL" or sRuta <> "" Then
-          contador = contador +1
-          Redim Preserve arrArchivos(contador)
-          arrArchivos(contador) = sPath & sRuta
-        End if
 
         EnviaMail sTexto, sNroCtaConEspacios , sTituloCache, sUsuarioCOrreo, sPasswordCorreo, sSMTPServerCorreo, sPuertoCorreo, nArchivo, sMailFrom
         contador2 = contador2 +1
@@ -257,7 +250,7 @@ Function EnviaMail(sTexto, sCliente, sTituloMail, sendusername, sendpassword, sm
 
    sMails = ""
    L = 0
-  ' sMails = "harena@softland.com.ar"
+  'sMails = "harena@softland.com.ar"
     On Error Resume Next
      sSqlMails = "Select VTMCLC_DIREML DIREML From VTMCLC Where VTMCLC_NROCTA='" & sCliente & "' And IsNull(USR_VTMCLC_ENVMAI,'N')='S' "
      Set rdMail = oConn.Execute(CStr(sSqlMails))

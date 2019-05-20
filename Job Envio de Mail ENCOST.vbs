@@ -1,5 +1,5 @@
 Public oWizard, oConn, ServerName, DatabaseName, UserName, Password
-Public oFSH, rd, sEsMain, sEsMulti
+Public oFSH, rd, sEsMain, sEsMulti, rdArchExt
 Public oFile, Fso2, Ferr, sNombreAuxArchivo, sArchivo, sCodigDeTransaccion, MailVendedor, MailCliente, sTexto, sParrafo, nArchivo
 
 Const ForReading = 1, ForWriting = 2, ForAppending = 8
@@ -7,7 +7,7 @@ Const TristateUseDefault = -2, TristateTrue = -1, TristateFalse = 0
 Const ObjectType = 5                    'Constante que indica el tipo de objeto. Este vale 5 para los reportes
 '************ Datos empresa **********
 Const cNombre_Empresa = "MPE"
-const sPath = "G:\adjuntosnp\" '<-----------Archivo adjunto externo'
+
 '************ para usar usuario encriptado **********
 Dim sUser, sPassWord, sServer, sDriver, dElementHtml
 Dim sDatabase 'Siempre asignar el nombre de la empresa antes de cualquier otra cosa
@@ -103,7 +103,7 @@ Function EjecutoEnvioMail(CodigoDeTransaccion, EsMulti, EsMain)
 
     arrArchivos = Array()
     contador = 0
-	  contador2 = 0
+	 contador2 = 0
     Do While Not rd.EOF
         If EsMulti = "S" Then
             sCodemp = rd("CODEMP").value
@@ -142,17 +142,32 @@ Function EjecutoEnvioMail(CodigoDeTransaccion, EsMulti, EsMain)
         iCount = TieneAnexo(sCodemp, sModfor, sCodfor, lNrofor)
 
         GeneroPDF sPdfPath, sNrocta, sCodemp, sModfor, sCodfor, lNrofor, sEsMain, EsMulti, sCodCom
-        if (instr(sCodCom,"FCA")<>0 or instr(sCodCom,"FCP")<>0 or instr(sCodCom,"FCU")<>0 or instr(sCodCom,"FCX")>0) and iCount>0 then
-        	GeneroPDFCV sPdfPath, sNrocta, sCodemp, sModfor, sCodfor, lNrofor, sEsMain, EsMulti,sCodCom
-        End if
+        if (instr(sCodCom,"FCA")<>0 or instr(sCodCom,"FCP")<>0 or instr(sCodCom,"FCU")<>0 or instr(sCodCom,"FCX")>0)and iCount>0 then
+        	 GeneroPDFCV sPdfPath, sNrocta, sCodemp, sModfor, sCodfor, lNrofor, sEsMain, EsMulti,sCodCom
+        	End if
         GeneroPDFVT sPdfPath, sNrocta, sCodemp, sModfor, sCodfor, lNrofor, sEsMain, EsMulti
 
-        sRuta = rd("RUTA").value
-        if sRuta <> "NULL" or sRuta <> "" Then
-          contador = contador +1
-          Redim Preserve arrArchivos(contador)
-          arrArchivos(contador) = sPath & sRuta
-        End if
+        sQueryArchExt = "SELECT FCRMVH_OLEOLE RUTA FROM FCRMVH WHERE  FCRMVH_MODFOR = '"& sModfor &"' AND "&_
+            "FCRMVH_CODFOR = '"& sCodfor &"' AND FCRMVH_NROFOR = "&lNrofor&" AND "&_
+            "FCRMVH_CODEMP = '"&sCodemp&"' AND FCRMVH_OLEOLE IS NOT NULL "
+        grabarLog_Archivo(Cstr(sQueryArchExt))
+
+        Set rdArchExt = oConn.Execute(CStr(sQueryArchExt))
+        grabarLog_Archivo(Cstr(contador))
+
+        Do While Not rdArchExt.EOF
+          sRuta = rdArchExt("RUTA").value
+          if sRuta <> "NULL" or sRuta <> "" Then
+            Redim Preserve arrArchivos(contador)
+            arrArchivos(contador) = Cstr(sRuta)
+            grabarLog_Archivo("ARCHIVO EXTERNO "+ Cstr(sRuta))
+            contador = contador +1
+          End if
+          rdArchExt.MoveNext
+        Loop
+
+
+
 
         EnviaMail sTexto, sNroCtaConEspacios , sTituloCache, sUsuarioCOrreo, sPasswordCorreo, sSMTPServerCorreo, sPuertoCorreo, nArchivo, sMailFrom
         contador2 = contador2 +1
@@ -330,6 +345,7 @@ Function EnviaMail(sTexto, sCliente, sTituloMail, sendusername, sendpassword, sm
             .Subject = sTitulo
             .HTMLBody = sTexto
             FOR EACH sAttachment IN arrArchivos
+            grabarLog_Archivo("sAttachment: "&sAttachment)
             .AddAttachment sAttachment
             NEXT
             .Send
